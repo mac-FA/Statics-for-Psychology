@@ -58,11 +58,11 @@
 
   // ---------- SVG plot ----------
   SP.plot = function (o) {
-    const W = o.w || 640, H = o.h || 300, m = Object.assign({ t: 14, r: 16, b: 38, l: 46 }, o.m);
+    const narrow = window.innerWidth < 600, W = Math.round((o.w || 640) * (narrow ? 0.6 : 1)), H = Math.round((o.h || 300) * (narrow ? 0.8 : 1)), m = Object.assign({ t: 14, r: 16, b: 38, l: 46 }, o.m);
     let xd = o.x || [0, 1], yd = o.y || [0, 1];
     const svg = SP.s('svg', { viewBox: `0 0 ${W} ${H}`, class: 'plot', role: 'img', 'aria-label': o.label || 'chart' });
     const p = {
-      el: svg, W, H, m,
+      el: svg, W, H, m, narrow,
       setX(d) { xd = d; }, setY(d) { yd = d; },
       get x() { return xd; }, get y() { return yd; },
       sx: v => m.l + (v - xd[0]) / (xd[1] - xd[0]) * (W - m.l - m.r),

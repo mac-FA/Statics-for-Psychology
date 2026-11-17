@@ -250,3 +250,4 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; ma
 .confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: fall linear forwards; }
 @keyframes fall { to { top: 105%; transform: rotate(720deg) translateX(40px); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 600px) { .ctable { border-spacing: 3px; } .ctable td { padding: .35rem .2rem; } .ctable th { padding: .1rem .2rem; font-size: .8rem; } .cell { gap: .1rem; } .cell input { width: 2.9rem; font-size: 1rem; padding: .25rem .1rem; } .stepper { width: 26px; height: 26px; } .widget-b { padding: .8rem .7rem; } .pbar { grid-template-columns: 56px 1fr 96px; } }

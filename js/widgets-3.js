@@ -243,7 +243,7 @@
       const boxes = opts.map(([k, t]) => { const c = h('input', { type: 'checkbox' }); c.addEventListener('change', () => { on[k] = c.checked; }); return h('label', { class: 'chk' }, c, h('span', { html: t })); });
       const p = SP.plot({ w: 640, h: 250, x: [0, 1], y: [0, 100], m: { t: 14, l: 46, r: 16, b: 40 }, label: 'Histogram of reported p-values' });
       f.controls.append(h('div', { class: 'chk-list' }, boxes), h('div', { class: 'btn-row' }, SP.btn('▶ Run 1000 studies of a non-existent effect', run, 'primary')));
-      f.plot.append(p.el);
+      f.plot.append(p.el, SP.legend([['s2', 'p < .05 – “significant”'], ['mut', 'not significant']]));
       const check = SP.missions(f.extra, 'phack', [
         { id: 'honest', text: 'Run the <b>honest</b> version (nothing ticked). The false-positive rate should be near 5 %.', test: s => s.k === 0 },
         { id: 'one', text: 'Which single practice inflates the error rate most? Run with <b>exactly one</b> box ticked and get above 10 %.', test: s => s.k === 1 && s.rate > 0.1 },
@@ -277,15 +277,14 @@
         const hg = SP.hist(ps || [], 0, 1, 20), mx = Math.max(100, ...hg.counts);
         p.setY([0, mx * 1.12]);
         p.clear().axes({ xLabel: 'Reported p-value', yLabel: 'Studies (of 1000)', xTicks: [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1], xFmt: v => String(v).replace(/^0\./, '.') });
-        if (!ps) { p.text(0.5, 50, 'Tick some “researcher degrees of freedom”, then run the simulation.', { fill: MUTED }); SP.stats(f.stats, [['False-positive rate', '–', 'nominal α = 5 %', 'hero']]); return; }
+        if (!ps) { p.text(0.5, 50, 'Tick some practices, then run the simulation.', { fill: MUTED }); SP.stats(f.stats, [['False-positive rate', '–', 'nominal α = 5 %', 'hero']]); return; }
         hg.counts.forEach((c, i) => {
           if (!c) return;
           const x0 = p.sx(hg.edges[i]), x1 = p.sx(hg.edges[i + 1]);
           SP.tip(p.add('rect', { x: x0 + 1, y: p.sy(c), width: x1 - x0 - 2, height: p.sy(0) - p.sy(c), rx: 3, fill: i === 0 ? C2 : MUTED, 'fill-opacity': i === 0 ? 1 : 0.35 }), `${c} studies with p between ${fmt(hg.edges[i])} and ${fmt(hg.edges[i + 1])}`);
         });
         p.add('line', { x1: p.m.l, x2: p.W - p.m.r, y1: p.sy(50), y2: p.sy(50), stroke: INK, 'stroke-dasharray': '5 4', 'stroke-width': 1.5 });
-        p.add('text', { x: p.W - p.m.r - 4, y: p.sy(50) - 6, class: 'tick', 'text-anchor': 'end' }, 'expected if analyses were honest (50 per bin)');
-        p.text(0.025, hg.counts[0], 'p < .05', { dy: -6, fill: INK, 'font-weight': 600, 'text-anchor': 'start', dx: -14 });
+        p.add('text', { x: p.W - p.m.r - 4, y: p.sy(50) - 6, class: 'tick', 'text-anchor': 'end' }, 'honest expectation: 50 per bin');
         SP.stats(f.stats, [
           ['False-positive rate', (rate * 100).toFixed(1) + ' %', 'nominal α = 5 %', 'hero' + (rate > 0.075 ? ' warn' : ' good')],
           ['Inflation', '× ' + fmt(rate / 0.05, 1), 'relative to the promised 5 %'],

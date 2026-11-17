@@ -91,7 +91,7 @@
         const m = S.mean(data), md = S.median(data), sd = S.sd(data), base = p.sy(0), r = 7;
         if (data.length > 1) {
           p.add('rect', { x: p.sx(clamp(m - sd, 0, 100)), y: p.m.t, width: p.sx(clamp(m + sd, 0, 100)) - p.sx(clamp(m - sd, 0, 100)), height: base - p.m.t, fill: C1, 'fill-opacity': 0.1 });
-          p.text(clamp(m, 8, 92), 0, 'mean ± 1 SD', { y: base - 4, class: 'lbl small', fill: MUTED });
+          p.text(clamp(m, 12, 88), 0, 'mean ± 1 SD', { y: p.m.t + 12, class: 'lbl small', fill: MUTED });
         }
         // dodge-stack the dots
         const order = data.map((v, i) => i).sort((a, b) => data[a] - data[b]), placed = [];
@@ -194,7 +194,7 @@
       let pop = 'skew', means = [], last = [];
       const top = SP.plot({ w: 640, h: 170, x: [0, 100], y: [0, 0.06], m: { t: 22, l: 16, r: 16, b: 26 }, label: 'Population distribution' });
       const bot = SP.plot({ w: 640, h: 230, x: [0, 100], y: [0, 10], m: { t: 22, l: 16, r: 16, b: 38 }, label: 'Histogram of sample means' });
-      f.plot.append(top.el, bot.el);
+      f.plot.append(top.el, bot.el, SP.legend([['s2', 'scores in the latest sample'], ['s1', 'sample means (▼ = latest)'], ['ink', 'dashed curve: normal distribution predicted by theory']]));
       const sel = SP.select({ label: 'Population shape', value: pop, options: Object.entries(pops).map(([k, v]) => [k, v.name]), onInput: v => { pop = v; reset(); } });
       const sn = SP.slider({ label: 'Sample size <i>n</i>', min: 2, max: 100, value: 5, onInput: reset });
       f.controls.append(sel, sn, h('div', { class: 'btn-row' }, SP.btn('Draw 1 sample', () => go(1), 'primary'), SP.btn('Draw 100', () => go(100)), SP.btn('Draw 1000', () => go(1000)), SP.btn('Reset', reset)));
@@ -217,7 +217,7 @@
         top.clear().axes({ yTicks: false, grid: false });
         top.fillCurve(P.pdf, 0, 100, { fill: MUTED, 'fill-opacity': 0.18 }, 300);
         top.curve(P.pdf, 0, 100, { stroke: MUTED }, 300);
-        top.add('text', { x: 18, y: 14, class: 'lbl', 'font-weight': 600 }, `Population (μ = ${fmt(P.mu, 0)}, σ = ${fmt(P.sd, 1)})` + (last.length ? ' with the latest sample' : ''));
+        top.add('text', { x: 18, y: 14, class: 'lbl', 'font-weight': 600 }, `Population (μ = ${fmt(P.mu, 0)}, σ = ${fmt(P.sd, 1)})`);
         last.forEach(v => { if (v >= 0 && v <= 100) top.add('circle', { cx: top.sx(v), cy: top.sy(0) - 6, r: 4, fill: C2, stroke: 'var(--surface)', 'stroke-width': 1.5 }); });
         if (last.length) { const m = S.mean(last); top.add('path', { d: `M${top.sx(m) - 6} ${top.sy(0) - 22} h12 l-6 9z`, fill: C1 }); }
         const hg = SP.hist(means, 0, 100, 80), mx = Math.max(5, ...hg.counts), w = 100 / 80;
@@ -225,7 +225,7 @@
         bot.clear().axes({ yTicks: false, grid: false, xLabel: 'Sample mean' });
         bot.bars(hg.edges, hg.counts, { fill: C1 }, (i, c) => `${c} sample mean${c > 1 ? 's' : ''} between ${fmt(hg.edges[i], 1)} and ${fmt(hg.edges[i + 1], 1)}`);
         if (means.length >= 30) bot.curve(x => S.normPdf(x, P.mu, se) * means.length * w, 0, 100, { stroke: INK, 'stroke-width': 1.5, 'stroke-dasharray': '5 4' }, 300);
-        bot.add('text', { x: 18, y: 14, class: 'lbl', 'font-weight': 600 }, `Distribution of ${means.length} sample mean${means.length === 1 ? '' : 's'} (n = ${n} each)` + (means.length >= 30 ? ' · dashed: normal curve predicted by theory' : ''));
+        bot.add('text', { x: 18, y: 14, class: 'lbl', 'font-weight': 600 }, `${means.length} sample mean${means.length === 1 ? '' : 's'} (n = ${n} each)`);
         SP.stats(f.stats, [
           ['Predicted SE', fmt(se), 'σ / √n = ' + fmt(P.sd, 1) + ' / √' + n, 'hero'],
           ['SD of the means so far', means.length > 1 ? fmt(S.sd(means)) : '–', 'should approach the SE'],
@@ -265,7 +265,7 @@
         cis = cis.slice(-SHOW); draw();
       }
       function draw() {
-        p.clear().axes({ yTicks: false, grid: false, xLabel: 'IQ score (true population mean μ = 100)' });
+        p.clear().axes({ yTicks: false, grid: false, xLabel: 'IQ score (true mean μ = 100)' });
         p.vline(MU, { stroke: INK, 'stroke-width': 1.5, 'stroke-dasharray': '5 4' });
         cis.forEach((c, i) => {
           const y = p.sy(i + 1), col = c.hit ? C1 : C2;
@@ -275,7 +275,7 @@
             SP.s('line', { x1: p.sx(70), x2: p.sx(130), y1: y, y2: y, stroke: 'transparent', 'stroke-width': 8 }));
           SP.tip(g, `M = ${fmt(c.m, 1)}, ${level} % CI [${fmt(c.lo, 1)}, ${fmt(c.hi, 1)}] – ${c.hit ? 'captures' : 'misses'} μ`);
         });
-        if (!cis.length) p.text(100, SHOW / 2, 'Each study samples n people and computes a CI for the mean.', { fill: MUTED });
+        if (!cis.length) p.text(100, SHOW / 2, 'Draw a study to see its confidence interval.', { fill: MUTED });
         SP.stats(f.stats, [
           ['Intervals capturing μ', total ? (hits / total * 100).toFixed(1) + ' %' : '–', `${hits} of ${total} studies`, 'hero'],
           ['Average width', total ? fmt(widthSum / total, 1) : '–', 'narrower = more precise'],
@@ -310,7 +310,7 @@
         const ext = i => (tails === 1 ? i >= k : Math.abs(i - n / 2) >= Math.abs(k - n / 2) - 1e-9);
         const pv = S.sum(pm.filter((_, i) => ext(i))), p1 = S.sum(pm.filter((_, i) => i >= k));
         p.setX([-0.5, n + 0.5]); p.setY([0, Math.max(...pm) * 1.15]);
-        p.clear().axes({ xLabel: 'Number of correct guesses if the “mind reader” is only guessing (H₀: π = .5)', yLabel: 'Probability', xTicks: SP.ticks([0, n], n <= 20 ? 10 : 6) });
+        p.clear().axes({ xLabel: 'Correct guesses under H₀ (pure guessing, π = .5)', yLabel: 'Probability', xTicks: SP.ticks([0, n], n <= 20 ? 10 : 6) });
         pm.forEach((v, i) => {
           if (v < 1e-5) return;
           const x0 = p.sx(i - 0.5), x1 = p.sx(i + 0.5), gap = n > 50 ? 1 : 2;

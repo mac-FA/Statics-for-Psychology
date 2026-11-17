@@ -86,7 +86,7 @@
   SP.widgets.ttest = {
     title: 't-test lab', icon: '🧑‍🤝‍🧑', blurb: 'Run independent and paired t-tests on simulated experiments and see what moves t, p and d.',
     mount(el) {
-      const f = SP.frame(el), NMAX = 100, BASE = 50;
+      const f = SP.frame(el), NMAX = 200, BASE = 50;
       let z1, z2, jit, design = 'ind';
       const resample = () => { z1 = S.sample(NMAX, () => S.rnorm()); z2 = S.sample(NMAX, () => S.rnorm()); jit = S.sample(NMAX * 2, () => Math.random() - 0.5); };
       resample();
@@ -112,15 +112,15 @@
         const ma = S.mean(a), mb = S.mean(b);
         const labels = design === 'pair' ? ['Before', 'After'] : ['Control', 'Treatment'];
         p.clear().axes({ yTicks: false, grid: false, xLabel: 'Score (e.g. memory test)' });
-        const ya = i => p.sy(2) + jit[i] * 34, yb = i => p.sy(1) + jit[i + NMAX] * 34;
+        const jh = (p.sy(1) - p.sy(2)) * 0.42, ya = i => p.sy(2) + jit[i] * jh, yb = i => p.sy(1) + jit[i + NMAX] * jh;
         if (design === 'pair') a.forEach((v, i) => p.add('line', { x1: p.sx(clamp(v, 0, 100)), y1: ya(i), x2: p.sx(clamp(b[i], 0, 100)), y2: yb(i), stroke: MUTED, 'stroke-opacity': 0.35, 'stroke-width': 1 }));
-        const rr = n > 50 ? 3.5 : 4.5;
+        const rr = n > 100 ? 2.8 : n > 50 ? 3.5 : 4.5;
         a.forEach((v, i) => SP.tip(p.add('circle', { cx: p.sx(clamp(v, 0, 100)), cy: ya(i), r: rr, fill: C1, 'fill-opacity': 0.6 }), `${labels[0]}: ${fmt(v, 1)}`));
         b.forEach((v, i) => SP.tip(p.add('circle', { cx: p.sx(clamp(v, 0, 100)), cy: yb(i), r: rr, fill: C2, 'fill-opacity': 0.6 }), `${labels[1]}: ${fmt(v, 1)}`));
         [[ma, a, 2], [mb, b, 1]].forEach(([m, arr, row]) => {
           const hw = S.tInv(0.975, n - 1) * S.sd(arr) / Math.sqrt(n), y = p.sy(row);
           p.add('line', { x1: p.sx(m - hw), x2: p.sx(m + hw), y1: y, y2: y, stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round' });
-          p.add('line', { x1: p.sx(m), x2: p.sx(m), y1: y - 24, y2: y + 24, stroke: INK, 'stroke-width': 2.5 });
+          p.add('line', { x1: p.sx(m), x2: p.sx(m), y1: y - jh * 0.7, y2: y + jh * 0.7, stroke: INK, 'stroke-width': 2.5 });
         });
         p.add('text', { x: 8, y: p.sy(2) + 4, class: 'lbl', 'font-weight': 600 }, labels[0]); p.add('text', { x: 8, y: p.sy(2) + 20, class: 'tick' }, 'M = ' + fmt(ma, 1));
         p.add('text', { x: 8, y: p.sy(1) + 4, class: 'lbl', 'font-weight': 600 }, labels[1]); p.add('text', { x: 8, y: p.sy(1) + 20, class: 'tick' }, 'M = ' + fmt(mb, 1));
@@ -146,7 +146,7 @@
       let z, jit;
       const resample = () => { z = [0, 1, 2].map(() => { const a = S.sample(NMAX, () => S.rnorm()); return a; }); jit = S.sample(NMAX * 3, () => Math.random() - 0.5); };
       resample();
-      const p = SP.plot({ w: 640, h: 300, x: [0, 3], y: [0, 60], m: { t: 14, l: 46, r: 16, b: 30 }, label: 'Scores in three groups' });
+      const p = SP.plot({ w: 640, h: 300, x: [0, 3], y: [0, 60], m: { t: 14, l: 46, r: 16, b: 44 }, label: 'Scores in three groups' });
       f.plot.append(p.el);
       const bar = h('div', { class: 'ssbar' });
       f.plot.append(bar);
@@ -171,7 +171,8 @@
           const cx = k + 0.5, m = S.mean(arr);
           arr.forEach((v, i) => SP.tip(p.add('circle', { cx: p.sx(cx + jit[k * NMAX + i] * 0.5), cy: p.sy(clamp(v, 0, 60)), r: 4.5, fill: cols[k], 'fill-opacity': 0.55 }), `${names[k]}: ${fmt(v, 1)}`));
           p.add('line', { x1: p.sx(cx - 0.33), x2: p.sx(cx + 0.33), y1: p.sy(m), y2: p.sy(m), stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round' });
-          p.add('text', { x: p.sx(cx), y: p.H - 10, class: 'lbl', 'text-anchor': 'middle', 'font-weight': 600 }, `${names[k]} (M = ${fmt(m, 1)})`);
+          p.add('text', { x: p.sx(cx), y: p.H - 24, class: 'lbl', 'text-anchor': 'middle', 'font-weight': 600 }, names[k]);
+          p.add('text', { x: p.sx(cx), y: p.H - 8, class: 'tick', 'text-anchor': 'middle' }, 'M = ' + fmt(m, 1));
         });
         const pb = r.ssb / r.sst * 100;
         bar.replaceChildren(
